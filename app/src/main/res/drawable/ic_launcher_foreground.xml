@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <!-- Bold white academic shield within 66dp safe zone -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:pathData="M54,23 L79,31 L79,53 C79,68.5 67.5,79.5 54,85 C40.5,79.5 29,68.5 29,53 L29,31 Z" />
+    <!-- Top academic bar -->
+    <path
+        android:fillColor="#0052D9"
+        android:pathData="M47,33.5 L61,33.5 L61,37 L47,37 Z" />
+    <!-- Geometric X -->
+    <path
+        android:fillColor="#0052D9"
+        android:pathData="M39,43 L44.5,43 L58,65 L52.5,65 Z" />
+    <path
+        android:fillColor="#0052D9"
+        android:pathData="M52.5,43 L58,43 L44.5,65 L39,65 Z" />
+    <!-- Geometric I -->
+    <path
+        android:fillColor="#0052D9"
+        android:pathData="M63,43 L69,43 L69,65 L63,65 Z" />
+</vector>

@@ -1,0 +1,14 @@
+<resources>
+    <string name="app_name">CLASS XI</string>
+    <string name="school_name">SMA Puspita Kota Tangerang</string>
+    <string name="foundation_name">Yayasan Pendidikan Puspitasari</string>
+    <string name="notification_channel_name">Info &amp; Agenda CLASS XI</string>
+    <string name="notification_channel_desc">Notifikasi real-time pengumuman kelas, materi baru, dan pengajuan izin dari teman CLASS XI.</string>
+    <string name="sign_in_google">Masuk dengan Google</string>
+    <string name="sign_out">Keluar Akun Google</string>
+    <string name="nav_beranda">Beranda</string>
+    <string name="nav_presensi">Presensi</string>
+    <string name="nav_kas">Uang Kas</string>
+    <string name="nav_info">Info &amp; Notif</string>
+    <string name="nav_pengaturan">Pengaturan</string>
+</resources>

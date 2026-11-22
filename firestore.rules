@@ -1,0 +1,501 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // 1. Global Safety Net (Default-Deny)
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // 2. Global Primitive Helpers
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function incoming() {
+      return request.resource.data;
+    }
+
+    function existing() {
+      return resource.data;
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() >= 1 && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function isClassDoc(data) {
+      return data.classId is string && data.classId == 'class_xi_puspita';
+    }
+
+    function classExists() {
+      return exists(/databases/$(database)/documents/classes/class_xi_puspita);
+    }
+
+    function isBoundedTimestamp(ts) {
+      return ts is timestamp && ts <= request.time;
+    }
+
+    // 3. Entity Validation Helpers
+    function isValidUserProfile(data) {
+      return data.userId is string && data.userId.size() >= 1 && data.userId.size() <= 128 &&
+             data.displayName is string && data.displayName.size() >= 1 && data.displayName.size() <= 60 &&
+             (!('email' in data) || (data.email is string && data.email.size() <= 120)) &&
+             (!('studentId' in data) || (data.studentId is int && data.studentId >= 0 && data.studentId <= 47)) &&
+             data.notifyEnabled is bool &&
+             isBoundedTimestamp(data.createdAt) &&
+             isBoundedTimestamp(data.updatedAt);
+    }
+
+    function isValidClassConfig(data) {
+      return isClassDoc(data) &&
+             data.userId is string && data.userId.size() >= 1 && data.userId.size() <= 128 &&
+             data.name is string && data.name.size() >= 1 && data.name.size() <= 60 &&
+             data.school is string && data.school.size() >= 1 && data.school.size() <= 100 &&
+             data.kasPeriods is list && data.kasPeriods.size() >= 1 && data.kasPeriods.size() <= 52 &&
+             data.kasPeriods[0] is string &&
+             isBoundedTimestamp(data.createdAt) &&
+             isBoundedTimestamp(data.updatedAt);
+    }
+
+    function isValidAttendanceDay(data) {
+      return isClassDoc(data) &&
+             data.userId is string && data.userId.size() >= 1 && data.userId.size() <= 128 &&
+             data.dateKey is string && data.dateKey.size() >= 8 && data.dateKey.size() <= 20 &&
+             data.records is map && data.records.size() <= 47 &&
+             data.lastUpdatedBy is string && data.lastUpdatedBy.size() >= 1 && data.lastUpdatedBy.size() <= 60 &&
+             isBoundedTimestamp(data.createdAt) &&
+             isBoundedTimestamp(data.updatedAt);
+    }
+
+    function isValidAnnouncement(data) {
+      return isClassDoc(data) &&
+             data.userId is string && data.userId.size() >= 1 && data.userId.size() <= 128 &&
+             data.title is string && data.title.size() >= 1 && data.title.size() <= 120 &&
+             data.category in ['Penting', 'Tugas', 'Event'] &&
+             data.deadline is string && data.deadline.size() >= 1 && data.deadline.size() <= 60 &&
+             data.desc is string && data.desc.size() >= 1 && data.desc.size() <= 1000 &&
+             (!('imageBase64' in data) || (data.imageBase64 is string && data.imageBase64.size() <= 450000)) &&
+             data.author is string && data.author.size() >= 1 && data.author.size() <= 60 &&
+             data.dateLabel is string && data.dateLabel.size() >= 1 && data.dateLabel.size() <= 40 &&
+             isBoundedTimestamp(data.createdAt) &&
+             isBoundedTimestamp(data.updatedAt);
+    }
+
+    function isValidLeaveRequest(data) {
+      return isClassDoc(data) &&
+             data.userId is string && data.userId.size() >= 1 && data.userId.size() <= 128 &&
+             data.studentId is int && data.studentId >= 1 && data.studentId <= 47 &&
+             data.noAbsen is string && data.noAbsen.size() >= 1 && data.noAbsen.size() <= 4 &&
+             data.studentName is string && data.studentName.size() >= 1 && data.studentName.size() <= 80 &&
+             data.piket is string && data.piket.size() >= 1 && data.piket.size() <= 20 &&
+             data.date is string && data.date.size() >= 8 && data.date.size() <= 20 &&
+             data.type in ['Sakit', 'Izin'] &&
+             data.reason is string && data.reason.size() >= 1 && data.reason.size() <= 200 &&
+             data.gformConfirmed is bool &&
+             data.status in ['Menunggu', 'Disetujui', 'Ditolak'] &&
+             data.submittedAt is string && data.submittedAt.size() >= 1 && data.submittedAt.size() <= 60 &&
+             data.verifiedBy is string && data.verifiedBy.size() <= 60 &&
+             isBoundedTimestamp(data.createdAt) &&
+             isBoundedTimestamp(data.updatedAt);
+    }
+
+    function isValidKasPeriodDoc(data) {
+      return isClassDoc(data) &&
+             data.userId is string && data.userId.size() >= 1 && data.userId.size() <= 128 &&
+             data.name is string && data.name.size() >= 1 && data.name.size() <= 80 &&
+             data.payments is map && data.payments.size() <= 47 &&
+             isBoundedTimestamp(data.createdAt) &&
+             isBoundedTimestamp(data.updatedAt);
+    }
+
+    function isValidKasTransaction(data) {
+      return isClassDoc(data) &&
+             data.userId is string && data.userId.size() >= 1 && data.userId.size() <= 128 &&
+             data.type in ['Pemasukan', 'Pengeluaran'] &&
+             data.amount is int && data.amount > 0 && data.amount <= 100000000 &&
+             data.date is string && data.date.size() >= 8 && data.date.size() <= 20 &&
+             data.category is string && data.category.size() >= 1 && data.category.size() <= 80 &&
+             data.note is string && data.note.size() >= 1 && data.note.size() <= 250 &&
+             data.author is string && data.author.size() >= 1 && data.author.size() <= 60 &&
+             (!('studentId' in data) || (data.studentId is int && data.studentId >= 0 && data.studentId <= 47)) &&
+             (!('period' in data) || (data.period is string && data.period.size() <= 80)) &&
+             data.voided is bool &&
+             isBoundedTimestamp(data.createdAt) &&
+             isBoundedTimestamp(data.updatedAt);
+    }
+
+    function isValidDokumentasiPost(data) {
+      return isClassDoc(data) &&
+             data.userId is string && data.userId.size() >= 1 && data.userId.size() <= 128 &&
+             data.title is string && data.title.size() >= 1 && data.title.size() <= 120 &&
+             data.category is string && data.category.size() >= 1 && data.category.size() <= 40 &&
+             data.mediaType in ['photo', 'video'] &&
+             data.mediaUrl is string && data.mediaUrl.size() >= 1 && data.mediaUrl.size() <= 450000 &&
+             data.fileName is string && data.fileName.size() >= 1 && data.fileName.size() <= 120 &&
+             data.caption is string && data.caption.size() <= 500 &&
+             data.author is string && data.author.size() >= 1 && data.author.size() <= 60 &&
+             data.date is string && data.date.size() >= 8 && data.date.size() <= 20 &&
+             data.likesCount is int && data.likesCount >= 0 && data.likesCount <= 10000 &&
+             isBoundedTimestamp(data.createdAt) &&
+             isBoundedTimestamp(data.updatedAt);
+    }
+
+    function isValidDokumentasiLike(data) {
+      return isClassDoc(data) &&
+             data.userId is string && data.userId.size() >= 1 && data.userId.size() <= 128 &&
+             isBoundedTimestamp(data.createdAt);
+    }
+
+    function isValidDokumentasiComment(data) {
+      return isClassDoc(data) &&
+             data.dokId is string && data.dokId.size() >= 1 && data.dokId.size() <= 128 &&
+             data.userId is string && data.userId.size() >= 1 && data.userId.size() <= 128 &&
+             data.senderName is string && data.senderName.size() >= 1 && data.senderName.size() <= 60 &&
+             data.text is string && data.text.size() >= 1 && data.text.size() <= 400 &&
+             data.timeLabel is string && data.timeLabel.size() >= 1 && data.timeLabel.size() <= 40 &&
+             isBoundedTimestamp(data.createdAt) &&
+             isBoundedTimestamp(data.updatedAt);
+    }
+
+    function isValidMateriItem(data) {
+      return isClassDoc(data) &&
+             data.userId is string && data.userId.size() >= 1 && data.userId.size() <= 128 &&
+             data.title is string && data.title.size() >= 1 && data.title.size() <= 120 &&
+             data.guru is string && data.guru.size() >= 1 && data.guru.size() <= 60 &&
+             data.mapel is string && data.mapel.size() >= 1 && data.mapel.size() <= 60 &&
+             data.desc is string && data.desc.size() <= 1000 &&
+             data.dateLabel is string && data.dateLabel.size() >= 1 && data.dateLabel.size() <= 40 &&
+             data.dl is int && data.dl >= 0 && data.dl <= 1000000 &&
+             data.fileName is string && data.fileName.size() <= 160 &&
+             (!('fileData' in data) || (data.fileData is string && data.fileData.size() <= 450000)) &&
+             (!('imgData' in data) || (data.imgData is string && data.imgData.size() <= 350000)) &&
+             isBoundedTimestamp(data.createdAt) &&
+             isBoundedTimestamp(data.updatedAt);
+    }
+
+    function isValidClassNotification(data) {
+      return isClassDoc(data) &&
+             data.userId is string && data.userId.size() >= 1 && data.userId.size() <= 128 &&
+             data.senderName is string && data.senderName.size() >= 1 && data.senderName.size() <= 60 &&
+             data.title is string && data.title.size() >= 1 && data.title.size() <= 140 &&
+             data.body is string && data.body.size() >= 1 && data.body.size() <= 350 &&
+             data.category in ['info', 'izin', 'materi', 'dokumentasi', 'kas'] &&
+             data.targetTab is string && data.targetTab.size() >= 1 && data.targetTab.size() <= 40 &&
+             isBoundedTimestamp(data.createdAt);
+    }
+
+    // 4. Collection Rules
+
+    // Private User Profiles (PII Isolated)
+    match /users/{userId} {
+      allow get, list: if isSignedIn() && request.auth.uid == userId;
+
+      allow create: if isSignedIn() &&
+                       isValidId(userId) &&
+                       request.auth.uid == userId &&
+                       incoming().userId == request.auth.uid &&
+                       incoming().keys().hasAll(['userId', 'displayName', 'notifyEnabled', 'createdAt', 'updatedAt']) &&
+                       incoming().keys().hasOnly(['userId', 'displayName', 'email', 'studentId', 'notifyEnabled', 'createdAt', 'updatedAt']) &&
+                       isValidUserProfile(incoming());
+
+      allow update: if isSignedIn() &&
+                       isValidId(userId) &&
+                       request.auth.uid == userId &&
+                       isValidUserProfile(incoming()) &&
+                       incoming().userId == existing().userId &&
+                       incoming().createdAt == existing().createdAt &&
+                       incoming().diff(existing()).affectedKeys().hasOnly(['displayName', 'email', 'studentId', 'notifyEnabled', 'updatedAt']);
+
+      allow delete: if isSignedIn() && isValidId(userId) && request.auth.uid == userId;
+    }
+
+    // Shared Class Root Config
+    match /classes/{classId} {
+      allow get: if isSignedIn() && isValidId(classId) && classId == 'class_xi_puspita';
+      allow list: if isSignedIn() && resource.data.classId == 'class_xi_puspita';
+
+      allow create: if isSignedIn() &&
+                       isValidId(classId) &&
+                       classId == 'class_xi_puspita' &&
+                       incoming().userId == request.auth.uid &&
+                       incoming().keys().hasAll(['classId', 'userId', 'name', 'school', 'kasPeriods', 'createdAt', 'updatedAt']) &&
+                       incoming().keys().hasOnly(['classId', 'userId', 'name', 'school', 'kasPeriods', 'createdAt', 'updatedAt']) &&
+                       isValidClassConfig(incoming());
+
+      allow update: if isSignedIn() &&
+                       isValidId(classId) &&
+                       classId == 'class_xi_puspita' &&
+                       isValidClassConfig(incoming()) &&
+                       incoming().classId == existing().classId &&
+                       incoming().userId == existing().userId &&
+                       incoming().createdAt == existing().createdAt &&
+                       incoming().diff(existing()).affectedKeys().hasOnly(['kasPeriods', 'updatedAt']);
+
+      allow delete: if false;
+    }
+
+    // Daily Attendance (47 students per dateKey)
+    match /attendance_days/{dateKey} {
+      allow get: if isSignedIn() && isValidId(dateKey);
+      allow list: if isSignedIn() && resource.data.classId == 'class_xi_puspita';
+
+      allow create: if isSignedIn() &&
+                       isValidId(dateKey) &&
+                       incoming().userId == request.auth.uid &&
+                       incoming().dateKey == dateKey &&
+                       incoming().keys().hasAll(['classId', 'userId', 'dateKey', 'records', 'lastUpdatedBy', 'createdAt', 'updatedAt']) &&
+                       incoming().keys().hasOnly(['classId', 'userId', 'dateKey', 'records', 'lastUpdatedBy', 'createdAt', 'updatedAt']) &&
+                       isValidAttendanceDay(incoming()) &&
+                       classExists();
+
+      allow update: if isSignedIn() &&
+                       isValidId(dateKey) &&
+                       isValidAttendanceDay(incoming()) &&
+                       incoming().classId == existing().classId &&
+                       incoming().userId == existing().userId &&
+                       incoming().dateKey == existing().dateKey &&
+                       incoming().createdAt == existing().createdAt &&
+                       incoming().diff(existing()).affectedKeys().hasOnly(['records', 'lastUpdatedBy', 'updatedAt']);
+
+      allow delete: if isSignedIn() && isValidId(dateKey) && existing().userId == request.auth.uid;
+    }
+
+    // Announcements & Agenda
+    match /announcements/{announcementId} {
+      allow get: if isSignedIn() && isValidId(announcementId);
+      allow list: if isSignedIn() && resource.data.classId == 'class_xi_puspita';
+
+      allow create: if isSignedIn() &&
+                       isValidId(announcementId) &&
+                       incoming().userId == request.auth.uid &&
+                       incoming().keys().hasAll(['classId', 'userId', 'title', 'category', 'deadline', 'desc', 'author', 'dateLabel', 'createdAt', 'updatedAt']) &&
+                       incoming().keys().hasOnly(['classId', 'userId', 'title', 'category', 'deadline', 'desc', 'imageBase64', 'author', 'dateLabel', 'createdAt', 'updatedAt']) &&
+                       isValidAnnouncement(incoming()) &&
+                       classExists();
+
+      allow update: if isSignedIn() &&
+                       isValidId(announcementId) &&
+                       isValidAnnouncement(incoming()) &&
+                       existing().userId == request.auth.uid &&
+                       incoming().classId == existing().classId &&
+                       incoming().userId == existing().userId &&
+                       incoming().createdAt == existing().createdAt &&
+                       incoming().diff(existing()).affectedKeys().hasOnly(['title', 'category', 'deadline', 'desc', 'imageBase64', 'updatedAt']);
+
+      allow delete: if isSignedIn() && isValidId(announcementId) && existing().userId == request.auth.uid;
+    }
+
+    // Leave Requests (Surat Izin & Sakit)
+    match /leave_requests/{leaveId} {
+      allow get: if isSignedIn() && isValidId(leaveId);
+      allow list: if isSignedIn() && resource.data.classId == 'class_xi_puspita';
+
+      allow create: if isSignedIn() &&
+                       isValidId(leaveId) &&
+                       incoming().userId == request.auth.uid &&
+                       incoming().status == 'Menunggu' &&
+                       incoming().verifiedBy == '' &&
+                       incoming().keys().hasAll(['classId', 'userId', 'studentId', 'noAbsen', 'studentName', 'piket', 'date', 'type', 'reason', 'gformConfirmed', 'status', 'submittedAt', 'verifiedBy', 'createdAt', 'updatedAt']) &&
+                       incoming().keys().hasOnly(['classId', 'userId', 'studentId', 'noAbsen', 'studentName', 'piket', 'date', 'type', 'reason', 'gformConfirmed', 'status', 'submittedAt', 'verifiedBy', 'createdAt', 'updatedAt']) &&
+                       isValidLeaveRequest(incoming()) &&
+                       classExists();
+
+      allow update: if isSignedIn() &&
+                       isValidId(leaveId) &&
+                       isValidLeaveRequest(incoming()) &&
+                       incoming().classId == existing().classId &&
+                       incoming().userId == existing().userId &&
+                       incoming().createdAt == existing().createdAt &&
+                       (
+                         // Terminal verification transition from Menunggu -> Disetujui/Ditolak
+                         (existing().status == 'Menunggu' &&
+                          (incoming().status == 'Disetujui' || incoming().status == 'Ditolak') &&
+                          incoming().verifiedBy.size() >= 1 &&
+                          incoming().diff(existing()).affectedKeys().hasOnly(['status', 'verifiedBy', 'updatedAt'])) ||
+                         // Sender toggles gformConfirmed while still pending
+                         (existing().userId == request.auth.uid &&
+                          existing().status == 'Menunggu' &&
+                          incoming().status == 'Menunggu' &&
+                          incoming().diff(existing()).affectedKeys().hasOnly(['gformConfirmed', 'updatedAt']))
+                       );
+
+      allow delete: if isSignedIn() && isValidId(leaveId) && existing().userId == request.auth.uid;
+    }
+
+    // Kas Periods (47 student payment statuses per period)
+    match /kas_periods/{periodId} {
+      allow get: if isSignedIn() && isValidId(periodId);
+      allow list: if isSignedIn() && resource.data.classId == 'class_xi_puspita';
+
+      allow create: if isSignedIn() &&
+                       isValidId(periodId) &&
+                       incoming().userId == request.auth.uid &&
+                       incoming().keys().hasAll(['classId', 'userId', 'name', 'payments', 'createdAt', 'updatedAt']) &&
+                       incoming().keys().hasOnly(['classId', 'userId', 'name', 'payments', 'createdAt', 'updatedAt']) &&
+                       isValidKasPeriodDoc(incoming()) &&
+                       classExists();
+
+      allow update: if isSignedIn() &&
+                       isValidId(periodId) &&
+                       isValidKasPeriodDoc(incoming()) &&
+                       incoming().classId == existing().classId &&
+                       incoming().userId == existing().userId &&
+                       incoming().name == existing().name &&
+                       incoming().createdAt == existing().createdAt &&
+                       incoming().diff(existing()).affectedKeys().hasOnly(['payments', 'updatedAt']);
+
+      allow delete: if false;
+    }
+
+    // Kas Transactions Ledger
+    match /kas_transactions/{txId} {
+      allow get: if isSignedIn() && isValidId(txId);
+      allow list: if isSignedIn() && resource.data.classId == 'class_xi_puspita';
+
+      allow create: if isSignedIn() &&
+                       isValidId(txId) &&
+                       incoming().userId == request.auth.uid &&
+                       incoming().voided == false &&
+                       incoming().keys().hasAll(['classId', 'userId', 'type', 'amount', 'date', 'category', 'note', 'author', 'voided', 'createdAt', 'updatedAt']) &&
+                       incoming().keys().hasOnly(['classId', 'userId', 'type', 'amount', 'date', 'category', 'note', 'author', 'studentId', 'period', 'voided', 'createdAt', 'updatedAt']) &&
+                       isValidKasTransaction(incoming()) &&
+                       classExists();
+
+      allow update: if isSignedIn() &&
+                       isValidId(txId) &&
+                       isValidKasTransaction(incoming()) &&
+                       existing().voided == false &&
+                       incoming().voided == true &&
+                       incoming().classId == existing().classId &&
+                       incoming().userId == existing().userId &&
+                       incoming().createdAt == existing().createdAt &&
+                       incoming().diff(existing()).affectedKeys().hasOnly(['voided', 'updatedAt']);
+
+      allow delete: if isSignedIn() && isValidId(txId) && existing().userId == request.auth.uid;
+    }
+
+    // Dokumentasi Gallery + Likes + Comments Subcollections
+    match /dokumentasi/{dokId} {
+      allow get: if isSignedIn() && isValidId(dokId);
+      allow list: if isSignedIn() && resource.data.classId == 'class_xi_puspita';
+
+      allow create: if isSignedIn() &&
+                       isValidId(dokId) &&
+                       incoming().userId == request.auth.uid &&
+                       incoming().likesCount == 0 &&
+                       incoming().keys().hasAll(['classId', 'userId', 'title', 'category', 'mediaType', 'mediaUrl', 'fileName', 'caption', 'author', 'date', 'likesCount', 'createdAt', 'updatedAt']) &&
+                       incoming().keys().hasOnly(['classId', 'userId', 'title', 'category', 'mediaType', 'mediaUrl', 'fileName', 'caption', 'author', 'date', 'likesCount', 'createdAt', 'updatedAt']) &&
+                       isValidDokumentasiPost(incoming()) &&
+                       classExists();
+
+      allow update: if isSignedIn() &&
+                       isValidId(dokId) &&
+                       isValidDokumentasiPost(incoming()) &&
+                       incoming().classId == existing().classId &&
+                       incoming().userId == existing().userId &&
+                       incoming().createdAt == existing().createdAt &&
+                       (
+                         // Action: Author edits title/caption/category
+                         (existing().userId == request.auth.uid &&
+                          incoming().diff(existing()).affectedKeys().hasOnly(['title', 'caption', 'category', 'updatedAt'])) ||
+                         // Action: Atomic Like (batch creates /likes/{uid})
+                         (incoming().likesCount == existing().likesCount + 1 &&
+                          !exists(/databases/$(database)/documents/dokumentasi/$(dokId)/likes/$(request.auth.uid)) &&
+                          existsAfter(/databases/$(database)/documents/dokumentasi/$(dokId)/likes/$(request.auth.uid)) &&
+                          incoming().diff(existing()).affectedKeys().hasOnly(['likesCount', 'updatedAt'])) ||
+                         // Action: Atomic Unlike (batch deletes /likes/{uid})
+                         (incoming().likesCount == existing().likesCount - 1 &&
+                          exists(/databases/$(database)/documents/dokumentasi/$(dokId)/likes/$(request.auth.uid)) &&
+                          !existsAfter(/databases/$(database)/documents/dokumentasi/$(dokId)/likes/$(request.auth.uid)) &&
+                          incoming().diff(existing()).affectedKeys().hasOnly(['likesCount', 'updatedAt']))
+                       );
+
+      allow delete: if isSignedIn() && isValidId(dokId) && existing().userId == request.auth.uid;
+
+      match /likes/{likeUserId} {
+        allow get: if isSignedIn() && isValidId(likeUserId) && request.auth.uid == likeUserId;
+        allow list: if isSignedIn() && resource.data.userId == request.auth.uid;
+
+        allow create: if isSignedIn() &&
+                         isValidId(likeUserId) &&
+                         request.auth.uid == likeUserId &&
+                         incoming().userId == request.auth.uid &&
+                         incoming().keys().hasAll(['classId', 'userId', 'createdAt']) &&
+                         incoming().keys().hasOnly(['classId', 'userId', 'createdAt']) &&
+                         isValidDokumentasiLike(incoming()) &&
+                         exists(/databases/$(database)/documents/dokumentasi/$(dokId));
+
+        allow update: if false;
+        allow delete: if isSignedIn() && isValidId(likeUserId) && request.auth.uid == likeUserId;
+      }
+
+      match /comments/{commentId} {
+        allow get: if isSignedIn() && isValidId(commentId);
+        allow list: if isSignedIn() && resource.data.classId == 'class_xi_puspita';
+
+        allow create: if isSignedIn() &&
+                         isValidId(commentId) &&
+                         incoming().userId == request.auth.uid &&
+                         incoming().dokId == dokId &&
+                         incoming().keys().hasAll(['classId', 'dokId', 'userId', 'senderName', 'text', 'timeLabel', 'createdAt', 'updatedAt']) &&
+                         incoming().keys().hasOnly(['classId', 'dokId', 'userId', 'senderName', 'text', 'timeLabel', 'createdAt', 'updatedAt']) &&
+                         isValidDokumentasiComment(incoming()) &&
+                         exists(/databases/$(database)/documents/dokumentasi/$(dokId));
+
+        allow update: if false;
+        allow delete: if isSignedIn() && isValidId(commentId) && existing().userId == request.auth.uid;
+      }
+    }
+
+    // Bank Materi (Mode Guru)
+    match /materi/{materiId} {
+      allow get: if isSignedIn() && isValidId(materiId);
+      allow list: if isSignedIn() && resource.data.classId == 'class_xi_puspita';
+
+      allow create: if isSignedIn() &&
+                       isValidId(materiId) &&
+                       incoming().userId == request.auth.uid &&
+                       incoming().dl == 0 &&
+                       incoming().keys().hasAll(['classId', 'userId', 'title', 'guru', 'mapel', 'desc', 'dateLabel', 'dl', 'fileName', 'createdAt', 'updatedAt']) &&
+                       incoming().keys().hasOnly(['classId', 'userId', 'title', 'guru', 'mapel', 'desc', 'dateLabel', 'dl', 'fileName', 'fileData', 'imgData', 'createdAt', 'updatedAt']) &&
+                       isValidMateriItem(incoming()) &&
+                       classExists();
+
+      allow update: if isSignedIn() &&
+                       isValidId(materiId) &&
+                       isValidMateriItem(incoming()) &&
+                       incoming().classId == existing().classId &&
+                       incoming().userId == existing().userId &&
+                       incoming().createdAt == existing().createdAt &&
+                       (
+                         // Action: Increment download counter
+                         (incoming().dl == existing().dl + 1 &&
+                          incoming().diff(existing()).affectedKeys().hasOnly(['dl', 'updatedAt'])) ||
+                         // Action: Author edits materi details
+                         (existing().userId == request.auth.uid &&
+                          incoming().diff(existing()).affectedKeys().hasOnly(['title', 'guru', 'mapel', 'desc', 'updatedAt']))
+                       );
+
+      allow delete: if isSignedIn() && isValidId(materiId) && existing().userId == request.auth.uid;
+    }
+
+    // Cross-Device Friend Notifications Stream
+    match /class_notifications/{notifId} {
+      allow get: if isSignedIn() && isValidId(notifId);
+      allow list: if isSignedIn() && resource.data.classId == 'class_xi_puspita';
+
+      allow create: if isSignedIn() &&
+                       isValidId(notifId) &&
+                       incoming().userId == request.auth.uid &&
+                       incoming().keys().hasAll(['classId', 'userId', 'senderName', 'title', 'body', 'category', 'targetTab', 'createdAt']) &&
+                       incoming().keys().hasOnly(['classId', 'userId', 'senderName', 'title', 'body', 'category', 'targetTab', 'createdAt']) &&
+                       isValidClassNotification(incoming()) &&
+                       classExists();
+
+      allow update: if false;
+      allow delete: if isSignedIn() && isValidId(notifId) && existing().userId == request.auth.uid;
+    }
+  }
+}

@@ -1,0 +1,6 @@
+{
+  "name": "CLASS XI",
+  "description": "Portal manajemen kelas XI SMA Puspita Kota Tangerang dengan presensi, uang kas, dokumentasi, jadwal, kartu QR, rekap guru, bank materi, dan notifikasi real-time antar teman.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

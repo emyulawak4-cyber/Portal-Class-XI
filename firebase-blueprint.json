@@ -1,0 +1,261 @@
+{
+  "entities": {
+    "UserProfile": {
+      "title": "UserProfile",
+      "description": "Private user account profile isolated per authenticated Google UID.",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string" },
+        "displayName": { "type": "string" },
+        "email": { "type": "string" },
+        "studentId": { "type": "integer" },
+        "notifyEnabled": { "type": "boolean" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["userId", "displayName", "notifyEnabled", "createdAt", "updatedAt"]
+    },
+    "ClassConfig": {
+      "title": "ClassConfig",
+      "description": "Shared CLASS XI metadata and treasury periods list.",
+      "type": "object",
+      "properties": {
+        "classId": { "type": "string" },
+        "userId": { "type": "string" },
+        "name": { "type": "string" },
+        "school": { "type": "string" },
+        "kasPeriods": { "type": "array" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["classId", "userId", "name", "school", "kasPeriods", "createdAt", "updatedAt"]
+    },
+    "AttendanceDay": {
+      "title": "AttendanceDay",
+      "description": "Daily attendance map for 47 students keyed by studentId string.",
+      "type": "object",
+      "properties": {
+        "classId": { "type": "string" },
+        "userId": { "type": "string" },
+        "dateKey": { "type": "string" },
+        "records": { "type": "object" },
+        "lastUpdatedBy": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["classId", "userId", "dateKey", "records", "lastUpdatedBy", "createdAt", "updatedAt"]
+    },
+    "Announcement": {
+      "title": "Announcement",
+      "description": "Class announcement and agenda broadcast item.",
+      "type": "object",
+      "properties": {
+        "classId": { "type": "string" },
+        "userId": { "type": "string" },
+        "title": { "type": "string" },
+        "category": { "type": "string", "enum": ["Penting", "Tugas", "Event"] },
+        "deadline": { "type": "string" },
+        "desc": { "type": "string" },
+        "imageBase64": { "type": "string" },
+        "author": { "type": "string" },
+        "dateLabel": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["classId", "userId", "title", "category", "deadline", "desc", "author", "dateLabel", "createdAt", "updatedAt"]
+    },
+    "LeaveRequest": {
+      "title": "LeaveRequest",
+      "description": "Student leave or sick request awaiting pengurus verification.",
+      "type": "object",
+      "properties": {
+        "classId": { "type": "string" },
+        "userId": { "type": "string" },
+        "studentId": { "type": "integer" },
+        "noAbsen": { "type": "string" },
+        "studentName": { "type": "string" },
+        "piket": { "type": "string" },
+        "date": { "type": "string" },
+        "type": { "type": "string", "enum": ["Sakit", "Izin"] },
+        "reason": { "type": "string" },
+        "gformConfirmed": { "type": "boolean" },
+        "status": { "type": "string", "enum": ["Menunggu", "Disetujui", "Ditolak"] },
+        "submittedAt": { "type": "string" },
+        "verifiedBy": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["classId", "userId", "studentId", "noAbsen", "studentName", "piket", "date", "type", "reason", "gformConfirmed", "status", "submittedAt", "verifiedBy", "createdAt", "updatedAt"]
+    },
+    "KasPeriodDoc": {
+      "title": "KasPeriodDoc",
+      "description": "Treasury payment ledger per period for 47 students.",
+      "type": "object",
+      "properties": {
+        "classId": { "type": "string" },
+        "userId": { "type": "string" },
+        "name": { "type": "string" },
+        "payments": { "type": "object" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["classId", "userId", "name", "payments", "createdAt", "updatedAt"]
+    },
+    "KasTransaction": {
+      "title": "KasTransaction",
+      "description": "Class treasury income or expense ledger entry.",
+      "type": "object",
+      "properties": {
+        "classId": { "type": "string" },
+        "userId": { "type": "string" },
+        "type": { "type": "string", "enum": ["Pemasukan", "Pengeluaran"] },
+        "amount": { "type": "integer" },
+        "date": { "type": "string" },
+        "category": { "type": "string" },
+        "note": { "type": "string" },
+        "author": { "type": "string" },
+        "studentId": { "type": "integer" },
+        "period": { "type": "string" },
+        "voided": { "type": "boolean" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["classId", "userId", "type", "amount", "date", "category", "note", "author", "voided", "createdAt", "updatedAt"]
+    },
+    "DokumentasiPost": {
+      "title": "DokumentasiPost",
+      "description": "Class photo or video gallery post.",
+      "type": "object",
+      "properties": {
+        "classId": { "type": "string" },
+        "userId": { "type": "string" },
+        "title": { "type": "string" },
+        "category": { "type": "string" },
+        "mediaType": { "type": "string", "enum": ["photo", "video"] },
+        "mediaUrl": { "type": "string" },
+        "fileName": { "type": "string" },
+        "caption": { "type": "string" },
+        "author": { "type": "string" },
+        "date": { "type": "string" },
+        "likesCount": { "type": "integer" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["classId", "userId", "title", "category", "mediaType", "mediaUrl", "fileName", "caption", "author", "date", "likesCount", "createdAt", "updatedAt"]
+    },
+    "DokumentasiLike": {
+      "title": "DokumentasiLike",
+      "description": "Per-user like marker doc under a dokumentasi post.",
+      "type": "object",
+      "properties": {
+        "classId": { "type": "string" },
+        "userId": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["classId", "userId", "createdAt"]
+    },
+    "DokumentasiComment": {
+      "title": "DokumentasiComment",
+      "description": "Comment under a dokumentasi post.",
+      "type": "object",
+      "properties": {
+        "classId": { "type": "string" },
+        "dokId": { "type": "string" },
+        "userId": { "type": "string" },
+        "senderName": { "type": "string" },
+        "text": { "type": "string" },
+        "timeLabel": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["classId", "dokId", "userId", "senderName", "text", "timeLabel", "createdAt", "updatedAt"]
+    },
+    "MateriItem": {
+      "title": "MateriItem",
+      "description": "Learning material uploaded by teachers in Mode Guru.",
+      "type": "object",
+      "properties": {
+        "classId": { "type": "string" },
+        "userId": { "type": "string" },
+        "title": { "type": "string" },
+        "guru": { "type": "string" },
+        "mapel": { "type": "string" },
+        "desc": { "type": "string" },
+        "dateLabel": { "type": "string" },
+        "dl": { "type": "integer" },
+        "fileName": { "type": "string" },
+        "fileData": { "type": "string" },
+        "imgData": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" },
+        "updatedAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["classId", "userId", "title", "guru", "mapel", "desc", "dateLabel", "dl", "fileName", "createdAt", "updatedAt"]
+    },
+    "ClassNotification": {
+      "title": "ClassNotification",
+      "description": "Cross-device notification event stream synced to friends in CLASS XI.",
+      "type": "object",
+      "properties": {
+        "classId": { "type": "string" },
+        "userId": { "type": "string" },
+        "senderName": { "type": "string" },
+        "title": { "type": "string" },
+        "body": { "type": "string" },
+        "category": { "type": "string", "enum": ["info", "izin", "materi", "dokumentasi", "kas"] },
+        "targetTab": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["classId", "userId", "senderName", "title", "body", "category", "targetTab", "createdAt"]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": { "$ref": "#/entities/UserProfile" },
+      "description": "Private user account profiles."
+    },
+    "/classes/{classId}": {
+      "schema": { "$ref": "#/entities/ClassConfig" },
+      "description": "Shared CLASS XI metadata and kas period definitions."
+    },
+    "/attendance_days/{dateKey}": {
+      "schema": { "$ref": "#/entities/AttendanceDay" },
+      "description": "Daily attendance records keyed by ISO date."
+    },
+    "/announcements/{announcementId}": {
+      "schema": { "$ref": "#/entities/Announcement" },
+      "description": "Class announcements and agenda."
+    },
+    "/leave_requests/{leaveId}": {
+      "schema": { "$ref": "#/entities/LeaveRequest" },
+      "description": "Student leave and sick requests."
+    },
+    "/kas_periods/{periodId}": {
+      "schema": { "$ref": "#/entities/KasPeriodDoc" },
+      "description": "Per-period treasury payment status for 47 students."
+    },
+    "/kas_transactions/{txId}": {
+      "schema": { "$ref": "#/entities/KasTransaction" },
+      "description": "Class treasury transaction ledger."
+    },
+    "/dokumentasi/{dokId}": {
+      "schema": { "$ref": "#/entities/DokumentasiPost" },
+      "description": "Class gallery documentation posts."
+    },
+    "/dokumentasi/{dokId}/likes/{likeUserId}": {
+      "schema": { "$ref": "#/entities/DokumentasiLike" },
+      "description": "Per-user likes on gallery posts."
+    },
+    "/dokumentasi/{dokId}/comments/{commentId}": {
+      "schema": { "$ref": "#/entities/DokumentasiComment" },
+      "description": "Comments on gallery posts."
+    },
+    "/materi/{materiId}": {
+      "schema": { "$ref": "#/entities/MateriItem" },
+      "description": "Teacher-uploaded learning materials."
+    },
+    "/class_notifications/{notifId}": {
+      "schema": { "$ref": "#/entities/ClassNotification" },
+      "description": "Friend notification events for foreground and WorkManager sync."
+    }
+  }
+}
